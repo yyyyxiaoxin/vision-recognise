@@ -10,6 +10,10 @@ import cv2
 class CamPublisher(Node):
     def __init__(self):
         super().__init__('cam_publisher')
+
+        self.declare_parameter('camera_device', 2)
+        camera_device = self.get_parameter(
+            'camera_device').get_parameter_value().integer_value
         
         # 创建发布者
         self.pub = self.create_publisher(Image, 'camera/image_raw', 10)
@@ -21,14 +25,16 @@ class CamPublisher(Node):
         self.cv_bridge = CvBridge()
         
         # 打开摄像头（根据你的实际情况改索引：0, 1, 2...）
-        self.cap = cv2.VideoCapture(2)
+        self.cap = cv2.VideoCapture(camera_device)
         
         # 检查摄像头
         if not self.cap.isOpened():
             self.get_logger().error("❌ 无法打开摄像头！请检查设备索引或连接。")
             raise RuntimeError("摄像头打开失败")
         
-        self.get_logger().info("✅ 图像发布节点已启动！正在发布到 /camera/image_raw")
+        self.get_logger().info(
+            f"✅ 图像发布节点已启动！设备索引={camera_device}，正在发布到 /camera/image_raw"
+        )
 
     def publish_frame(self):
         ret, frame = self.cap.read()

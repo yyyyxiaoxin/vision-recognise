@@ -11,7 +11,6 @@ import numpy as np
 from PIL import Image as PILImage
 from PIL import ImageDraw, ImageFont
 import serial
-import struct
 
 class ShapeSubscriber(Node):
     def __init__(self):
@@ -28,21 +27,39 @@ class ShapeSubscriber(Node):
 
         self.cv_bridge = CvBridge()
 
-        # ===================== 串口初始化（树莓派 -> 云台驱动板） =====================
-        try:
-            self.ser = serial.Serial(
-                port="/dev/ttyUSB0",    # 树莓派硬件串口
-                baudrate=115200,        # 波特率（和驱动板一致）
-                timeout=1
-            )
-            self.get_logger().info("✅ 串口连接成功！云台控制已就绪")
-        except Exception as e:
-            self.get_logger().error(f"❌ 串口打开失败：{str(e)}")
-            self.ser = None
+        self.declare_parameter('debug_serial_port', '/dev/ttyGS0')
+        self.declare_parameter('debug_serial_baudrate', 115200)
+        self.declare_parameter('shape_serial_port', '/dev/ttyS3')
+        self.declare_parameter('shape_serial_baudrate', 115200)
 
-        # 云台控制参数（比例系数，调这个控制云台速度）
-        self.Kp = 0.3  # 数值越大，云台转动越快
-        self.get_logger().info("✅ 图形识别+偏差计算+云台控制节点启动！")
+        self.debug_serial_port = self.get_parameter(
+            'debug_serial_port').get_parameter_value().string_value
+        self.debug_serial_baudrate = self.get_parameter(
+            'debug_serial_baudrate').get_parameter_value().integer_value
+        self.shape_serial_port = self.get_parameter(
+            'shape_serial_port').get_parameter_value().string_value
+        self.shape_serial_baudrate = self.get_parameter(
+            'shape_serial_baudrate').get_parameter_value().integer_value
+
+        self.debug_ser = self.open_serial(
+            self.debug_serial_port,
+            self.debug_serial_baudrate,
+            '调试串口'
+        )
+        self.shape_ser = self.open_serial(
+            self.shape_serial_port,
+            self.shape_serial_baudrate,
+            '图形结果串口'
+        )
+
+        self.shape_serial_map = {
+            '三角形': 'TRIANGLE',
+            '矩形': 'RECTANGLE',
+            '五边形': 'PENTAGON',
+            '圆形': 'CIRCLE',
+        }
+
+        self.get_logger().info("✅ 图形识别+双串口输出节点启动！")
 
     # ===================== 你的偏差计算函数 =====================
     def calculate_deviation(self, target_center, frame_shape):
@@ -53,38 +70,49 @@ class ShapeSubscriber(Node):
         dy = target_center[1] - img_center_y
         return dx, dy, img_center_x, img_center_y
 
-    # ===================== 串口发送云台控制指令 =====================
-    def send_gimbal_command(self, dx, dy):
-        if self.ser is None or not self.ser.is_open:
+    def open_serial(self, port, baudrate, label):
+        try:
+            ser = serial.Serial(
+                port=port,
+                baudrate=baudrate,
+                timeout=1
+            )
+            self.get_logger().info(
+                f"✅ {label}已连接: {port} @ {baudrate}"
+            )
+            return ser
+        except Exception as e:
+            self.get_logger().error(
+                f"❌ {label}打开失败({port}): {str(e)}"
+            )
+            return None
+
+    def write_serial_line(self, ser, payload, label):
+        if ser is None or not ser.is_open:
             return
 
-        # 1. 比例控制：把像素偏差转换成云台运动速度（核心！）
-        speed_x = int(dx * self.Kp)
-        speed_y = int(dy * self.Kp)
+        try:
+            ser.write((payload + '\r\n').encode('utf-8'))
+        except Exception as e:
+            self.get_logger().error(f"{label}发送失败: {str(e)}")
 
-        # 2. 限制速度范围（防止电机过载）
-        speed_x = np.clip(speed_x, -255, 255)
-        speed_y = np.clip(speed_y, -255, 255)
+    def send_debug_offset(self, dx, dy):
+        payload = f"DX:{dx},DY:{dy}"
+        self.write_serial_line(self.debug_ser, payload, '调试串口')
 
-        # 3. 自定义通信协议（帧头+数据+校验+帧尾，稳定不丢包）
-        frame_head = 0x55
-        frame_tail = 0xBB
-        # 打包数据：X速度 Y速度
-        data = struct.pack('<hh', speed_x, speed_y)
-        check_sum = sum(data) & 0xFF  # 简单校验
-
-        # 4. 拼接完整帧并发送
-        full_frame = bytes([frame_head]) + data + bytes([check_sum, frame_tail])
-        self.ser.write(full_frame)
-
-        self.get_logger().info(f"🎮 云台指令：X速度={speed_x} | Y速度={speed_y}")
+    def send_shape_result_serial(self, shape_name):
+        shape_code = self.shape_serial_map.get(shape_name, 'NONE')
+        payload = f"SHAPE:{shape_code}"
+        self.write_serial_line(self.shape_ser, payload, '图形结果串口')
 
     def image_callback(self, msg):
         try:
             frame = self.cv_bridge.imgmsg_to_cv2(msg, 'bgr8')
             shape_name, target_center = self.detect_target_shape(frame)
 
-            # 识别成功 → 计算偏差 + 发送云台指令
+            result_msg = String()
+
+            # 识别成功 → 计算偏差 + 双串口发送
             if shape_name and target_center:
                 dx, dy, img_cx, img_cy = self.calculate_deviation(target_center, frame.shape)
                 
@@ -95,12 +123,16 @@ class ShapeSubscriber(Node):
                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,255), 2)
 
                 # 发布结果
-                result_msg = String()
                 result_msg.data = f"{shape_name} | X:{dx} Y:{dy}"
                 self.pub_result.publish(result_msg)
 
-                # 发送指令控制云台
-                self.send_gimbal_command(dx, dy)
+                # 调试串口发偏差，业务串口发形状
+                self.send_debug_offset(dx, dy)
+                self.send_shape_result_serial(shape_name)
+            else:
+                result_msg.data = "未识别到目标"
+                self.pub_result.publish(result_msg)
+                self.send_shape_result_serial(None)
 
             # 发布处理后的图像
             out_msg = self.cv_bridge.cv2_to_imgmsg(frame, 'bgr8')
@@ -204,9 +236,10 @@ class ShapeSubscriber(Node):
         return cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
 
     def destroy_node(self):
-        # 关闭串口
-        if self.ser and self.ser.is_open:
-            self.ser.close()
+        if self.debug_ser and self.debug_ser.is_open:
+            self.debug_ser.close()
+        if self.shape_ser and self.shape_ser.is_open:
+            self.shape_ser.close()
         super().destroy_node()
 
 def main():
