@@ -14,8 +14,8 @@ class CamPublisher(Node):
         # 创建发布者
         self.pub = self.create_publisher(Image, 'camera/image_raw', 10)
         
-        # 定时器：10Hz (0.1秒)
-        self.timer = self.create_timer(0.1, self.publish_frame)
+        # 定时器：20Hz，减少识别滞后感
+        self.timer = self.create_timer(0.05, self.publish_frame)
         
         # 初始化工具
         self.cv_bridge = CvBridge()
