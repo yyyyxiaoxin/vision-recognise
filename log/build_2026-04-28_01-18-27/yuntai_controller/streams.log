@@ -1,0 +1,29 @@
+[0.517s] Invoking command in '/home/cx/yuntai_controller/src/yuntai_controller': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/cx/yuntai_controller/build/yuntai_controller/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/cx/yuntai_controller/install/yuntai_controller/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/yuntai_controller build --build-base /home/cx/yuntai_controller/build/yuntai_controller/build install --record /home/cx/yuntai_controller/build/yuntai_controller/install.log --single-version-externally-managed install_data
+[0.643s] running egg_info
+[0.651s] writing ../../build/yuntai_controller/yuntai_controller.egg-info/PKG-INFO
+[0.651s] writing dependency_links to ../../build/yuntai_controller/yuntai_controller.egg-info/dependency_links.txt
+[0.651s] writing entry points to ../../build/yuntai_controller/yuntai_controller.egg-info/entry_points.txt
+[0.651s] writing requirements to ../../build/yuntai_controller/yuntai_controller.egg-info/requires.txt
+[0.651s] writing top-level names to ../../build/yuntai_controller/yuntai_controller.egg-info/top_level.txt
+[0.667s] reading manifest file '../../build/yuntai_controller/yuntai_controller.egg-info/SOURCES.txt'
+[0.667s] adding license file 'LICENSE'
+[0.668s] writing manifest file '../../build/yuntai_controller/yuntai_controller.egg-info/SOURCES.txt'
+[0.668s] running build
+[0.668s] running build_py
+[0.668s] copying yuntai_controller/detect_subscribe.py -> /home/cx/yuntai_controller/build/yuntai_controller/build/lib/yuntai_controller
+[0.668s] copying yuntai_controller/detect_node.py -> /home/cx/yuntai_controller/build/yuntai_controller/build/lib/yuntai_controller
+[0.668s] running install
+[0.672s] running install_lib
+[0.680s] copying /home/cx/yuntai_controller/build/yuntai_controller/build/lib/yuntai_controller/detect_subscribe.py -> /home/cx/yuntai_controller/install/yuntai_controller/lib/python3.12/site-packages/yuntai_controller
+[0.680s] copying /home/cx/yuntai_controller/build/yuntai_controller/build/lib/yuntai_controller/detect_node.py -> /home/cx/yuntai_controller/install/yuntai_controller/lib/python3.12/site-packages/yuntai_controller
+[0.680s] byte-compiling /home/cx/yuntai_controller/install/yuntai_controller/lib/python3.12/site-packages/yuntai_controller/detect_subscribe.py to detect_subscribe.cpython-312.pyc
+[0.681s] byte-compiling /home/cx/yuntai_controller/install/yuntai_controller/lib/python3.12/site-packages/yuntai_controller/detect_node.py to detect_node.cpython-312.pyc
+[0.681s] running install_data
+[0.682s] running install_egg_info
+[0.690s] removing '/home/cx/yuntai_controller/install/yuntai_controller/lib/python3.12/site-packages/yuntai_controller-0.0.0-py3.12.egg-info' (and everything under it)
+[0.690s] Copying ../../build/yuntai_controller/yuntai_controller.egg-info to /home/cx/yuntai_controller/install/yuntai_controller/lib/python3.12/site-packages/yuntai_controller-0.0.0-py3.12.egg-info
+[0.691s] running install_scripts
+[0.752s] Installing detect_node script to /home/cx/yuntai_controller/install/yuntai_controller/lib/yuntai_controller
+[0.752s] Installing detect_subscribe script to /home/cx/yuntai_controller/install/yuntai_controller/lib/yuntai_controller
+[0.753s] writing list of installed files to '/home/cx/yuntai_controller/build/yuntai_controller/install.log'
+[0.768s] Invoked command in '/home/cx/yuntai_controller/src/yuntai_controller' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/cx/yuntai_controller/build/yuntai_controller/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/cx/yuntai_controller/install/yuntai_controller/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/yuntai_controller build --build-base /home/cx/yuntai_controller/build/yuntai_controller/build install --record /home/cx/yuntai_controller/build/yuntai_controller/install.log --single-version-externally-managed install_data

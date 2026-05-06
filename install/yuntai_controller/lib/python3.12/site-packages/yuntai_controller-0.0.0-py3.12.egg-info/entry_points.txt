@@ -1,0 +1,3 @@
+[console_scripts]
+detect_node = yuntai_controller.detect_node:main
+detect_subscribe = yuntai_controller.detect_subscribe:main
